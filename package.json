@@ -1,0 +1,31 @@
+{
+  "name": "rxjs-practice",
+  "version": "1.0.0",
+  "description": "",
+  "homepage": "https://github.com/KimDaegyu-Dev/RxJS-Practice#readme",
+  "bugs": {
+    "url": "https://github.com/KimDaegyu-Dev/RxJS-Practice/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KimDaegyu-Dev/RxJS-Practice.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@reactivex/rxjs": "^6.6.7",
+    "rxjs": "^7.8.2"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3",
+    "vite": "^7.0.4"
+  }
+}

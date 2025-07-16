@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      .view {
+        overflow: hidden;
+        height: 100vh;
+      }
+      .view .container {
+        white-space: nowrap;
+        padding: 0;
+        list-style: none;
+        font-size: 0;
+        height: 100vh;
+      }
+      .view .panel {
+        width: 100%;
+        min-height: 200px;
+        display: inline-block;
+        height: 100vh;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="carousel" class="view">
+      <ul class="container">
+        <li class="panel" style="background-color: red; color: white">1</li>
+        <li class="panel" style="background-color: blue; color: white">2</li>
+        <li class="panel" style="background-color: green; color: white">3</li>
+        <li class="panel" style="background-color: yellow; color: white">4</li>
+      </ul>
+    </div>
+    <script type="module">
+      import {
+        fromEvent,
+        switchMap,
+        takeUntil,
+        tap,
+        throttleTime,
+        map,
+        share,
+        first,
+        mergeAll,
+        startWith,
+        withLatestFrom,
+        merge,
+        scan,
+      } from "rxjs";
+
+      const $view = document.querySelector(".view");
+      const $container = document.querySelector(".container");
+      const $panels = document.querySelectorAll(".panel");
+
+      const SUPPORT_TOUCH = "ontouchstart" in window;
+      const EVENTS = {
+        start: SUPPORT_TOUCH ? "touchstart" : "mousedown",
+        move: SUPPORT_TOUCH ? "touchmove" : "mousemove",
+        end: SUPPORT_TOUCH ? "touchend" : "mouseup",
+      };
+
+      const THRESHOLD = 30;
+      const PANEL_COUNT = 4;
+
+      function translateX(posX) {
+        $container.style.transform = `translate3d(${posX}px, 0, 0)`;
+      }
+
+      function toPos(obs$) {
+        return obs$.pipe(
+          map((event) =>
+            SUPPORT_TOUCH ? event.changedTouches[0].pageX : event.pageX
+          )
+        );
+      }
+
+      const start$ = fromEvent($view, EVENTS.start).pipe(toPos);
+      const move$ = fromEvent($view, EVENTS.move).pipe(toPos);
+      const end$ = fromEvent($view, EVENTS.end);
+
+      const size$ = fromEvent(window, "resize").pipe(
+        throttleTime(100),
+        map((event) => event.target.innerWidth),
+        startWith(window.innerWidth)
+      );
+
+      const drag$ = start$.pipe(
+        switchMap((start) =>
+          move$.pipe(
+            throttleTime(100),
+            map((move) => move - start),
+            takeUntil(end$)
+          )
+        ),
+        share(),
+        map((distance) => ({
+          distance,
+        }))
+      );
+
+      const drop$ = drag$.pipe(
+        switchMap((drag) =>
+          end$.pipe(
+            map((event) => drag),
+            first()
+          )
+        ),
+        withLatestFrom(size$, (drag, size) => {
+          return { ...drag, size };
+        })
+      );
+
+      const carousel$ = merge(drag$, drop$).pipe(
+        scan(
+          (store, { distance, size }) => {
+            const updateStore = {
+              from: -(store.index * store.size) + distance,
+            };
+            if (size === undefined) {
+              // drag 시점
+              updateStore.to = updateStore.from;
+            } else {
+              let tobeIndex = store.index;
+              if (Math.abs(distance) >= THRESHOLD) {
+                tobeIndex =
+                  distance < 0
+                    ? Math.min(tobeIndex + 1, PANEL_COUNT)
+                    : Math.max(tobeIndex - 1, 0);
+              }
+              updateStore.index = tobeIndex;
+              updateStore.to = -(tobeIndex * size);
+              updateStore.size = size;
+            }
+
+            return { ...store, ...updateStore };
+          },
+          {
+            to: 0,
+            from: 0,
+            index: 0,
+            size: 0,
+          }
+        )
+      );
+      // 데이터 확인을 위한 코드
+      //   drag$.subscribe((drag) => {
+      //     console.log("drag", drag);
+      //   });
+      //   drop$.subscribe((drop) => {
+      //     console.log("drop", drop);
+      //   });
+      //   size$.subscribe((size) => {
+      //     console.log("size", size);
+      //   });
+      carousel$.subscribe((data) => {
+        console.log("data", data);
+        translateX(data.to);
+      });
+    </script>
+  </body>
+</html>

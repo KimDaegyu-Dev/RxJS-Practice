@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" type="text/css" href="./style.css"/> 
+  <!-- font awesome CDN -->
+  <script src="https://use.fontawesome.com/releases/v5.0.8/js/all.js"></script>
+  <script type="text/javascript" src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=24dm5hy5dd&submodules=geocoder&language=ko"></script>
+  <script type="module" src="./src/app.js"></script>
+</head>
+<body>
+  <header>
+    <h2 class="bus">RxJS Example</h2>
+    <!-- 자동완성 UI 영역 (시작) -->
+    <div class="autocomplete">
+      <input type="input" placeholder="검색하고 싶은 버스 번호를 입력해주세요"></input>
+      <ul class="layer"></ul>
+      <div class="loading">
+        <i class="fas fa-spinner fa-pulse"></i>
+      </div>
+    </div>
+    <!-- 자동완성 UI 영역 (끝) -->
+  </header>
+  <main>
+    <!-- 지도 영역 (시작) -->
+    <article id="map"></article>
+    <!-- 지도 영역 (끝) -->
+    <!-- 사이드바 영역 (시작) -->
+    <aside class="stations">
+      <div class="title-container">
+        <span class="title"></span>
+      </div>
+      <ul></ul>
+    </aside>
+    <!-- 사이드바 영역 (끝) -->
+  </main>
+</body>
+</html>

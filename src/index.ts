@@ -1,1 +1,1 @@
-import "./Part2/Chapter7/Subject";
+import "./Part2/Chapter10/1.1";

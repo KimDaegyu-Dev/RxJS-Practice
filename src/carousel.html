@@ -48,6 +48,13 @@
         withLatestFrom,
         merge,
         scan,
+        concat,
+        defer,
+        interval,
+        takeWhile,
+        of,
+        mergeMap,
+        animationFrameScheduler,
       } from "rxjs";
 
       const $view = document.querySelector(".view");
@@ -62,6 +69,7 @@
       };
 
       const THRESHOLD = 30;
+      const DURATION = 300;
       const PANEL_COUNT = 4;
 
       function translateX(posX) {
@@ -112,6 +120,21 @@
         })
       );
 
+      function animation(from, to, duration) {
+        return defer(() => {
+          const scheduler = animationFrameScheduler;
+          const start = scheduler.now();
+          const DURATION = duration;
+          let animation$ = interval(0, scheduler).pipe(
+            map(() => (scheduler.now() - start) / DURATION),
+            takeWhile((progress) => progress <= 1)
+          );
+          animation$ = concat(animation$, of(1)).pipe(
+            map((rate) => from + (to - from) * rate)
+          );
+          return animation$;
+        });
+      }
       const carousel$ = merge(drag$, drop$).pipe(
         scan(
           (store, { distance, size }) => {
@@ -142,8 +165,12 @@
             index: 0,
             size: 0,
           }
+        ),
+        switchMap(({ from, to }) =>
+          from === to ? of(from) : animation(from, to, DURATION)
         )
       );
+
       // 데이터 확인을 위한 코드
       //   drag$.subscribe((drag) => {
       //     console.log("drag", drag);
@@ -156,7 +183,7 @@
       //   });
       carousel$.subscribe((data) => {
         console.log("data", data);
-        translateX(data.to);
+        translateX(data);
       });
     </script>
   </body>

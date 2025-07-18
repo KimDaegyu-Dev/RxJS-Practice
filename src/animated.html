@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Animated</title>
+    <style>
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+      }
+      .card {
+        width: 1000px;
+        height: 1000px;
+        transform-style: preserve-3d;
+        transform-origin: center;
+        position: relative;
+      }
+      .front {
+        width: 100%;
+        height: 100%;
+        background-color: blue;
+        position: absolute;
+        backface-visibility: hidden;
+      }
+      .back {
+        width: 100%;
+        height: 100%;
+        background-color: green;
+        position: absolute;
+        backface-visibility: hidden;
+        transform: rotateY(180deg);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <div class="front"></div>
+      <div class="back"></div>
+    </div>
+    <div class="card" style="transform: rotateX(180deg)">
+      <div class="front"></div>
+      <div class="back"></div>
+    </div>
+    <div class="card" style="transform: rotateX(180deg)">
+      <div class="front"></div>
+      <div class="back"></div>
+    </div>
+    <div class="card" style="transform: rotateX(180deg)">
+      <div class="front"></div>
+      <div class="back"></div>
+    </div>
+
+    <script type="module">
+      import {
+        fromEvent,
+        map,
+        interval,
+        animationFrameScheduler,
+        withLatestFrom,
+        scan,
+        tap,
+        bufferTime,
+      } from "rxjs";
+
+      // 상수
+      const SUPPORT_TOUCH = "ontouchstart" in window;
+      const EVENTS = {
+        start: SUPPORT_TOUCH ? "touchstart" : "mousedown",
+        move: SUPPORT_TOUCH ? "touchmove" : "mousemove",
+        end: SUPPORT_TOUCH ? "touchend" : "mouseup",
+      };
+      const DEGREE = 100;
+
+      // 요소
+      const $doc = document.documentElement;
+      const $cards = document.querySelectorAll(".card");
+      const { clientWidth, clientHeight } = $doc;
+      // 함수
+      function lerp(start, end) {
+        const dx = end.x - start.x;
+        const dy = end.y - start.y;
+
+        return {
+          x: start.x + dx * 0.1,
+          y: start.y + dy * 0.1,
+        };
+      }
+      // 스트림
+      const animation$ = interval(43, animationFrameScheduler);
+      const mouseMove$ = fromEvent($doc, EVENTS.move).pipe(
+        map((event) => ({
+          x: SUPPORT_TOUCH ? event.changedTouches[0].pageX : event.pageX,
+          y: SUPPORT_TOUCH ? event.changedTouches[0].pageY : event.pageY,
+        }))
+      );
+      const smoothMove$ = animation$.pipe(
+        withLatestFrom(mouseMove$, (frame, move) => move),
+        scan((acc, curr) => lerp(acc, curr), { x: 0, y: 0 })
+      );
+      const fps$ = animation$.pipe(
+        bufferTime(1000),
+        map((arr) => arr.length)
+      );
+
+      // 스트림 적용
+      smoothMove$.subscribe((pos) => {
+        const rotX = (pos.y / clientHeight) * -2 * DEGREE + DEGREE;
+        const rotY = (pos.x / clientWidth) * 2 * DEGREE - DEGREE;
+
+        $cards.forEach((card) => {
+          card.style.cssText = `
+            transform: rotateX(${rotX}deg) rotateY(${rotY}deg);
+          `;
+        });
+      });
+      fps$.subscribe((fps) => {
+        console.log(fps);
+      });
+    </script>
+  </body>
+</html>

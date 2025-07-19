@@ -7,6 +7,7 @@ import {
   of,
   scan,
   switchMap,
+  merge,
 } from "rxjs";
 import { ajax } from "rxjs/ajax";
 
@@ -173,7 +174,7 @@ export default class Map {
       return `<dl class="bus-routes">
     <dt><strong>${name}</strong></dt>
     <dd>
-    <a href="#">
+    <a href="${buses.routeId}_${buses.routeName}">
     <strong>${buses.routeName}</strong> <span>${
         buses.regionName
       }</span><span class="type ${getBuesType(buses.routeTypeName)}">${
@@ -185,7 +186,7 @@ export default class Map {
     const list = buses
       .map(
         (bus) => `<dd>
-      <a href="#">
+      <a href="${bus.routeId}_${bus.routeName}">
       <strong>${bus.routeName}</strong> <span>${
           bus.regionName
         }</span><span class="type ${getBuesType(bus.routeTypeName)}">${
@@ -200,13 +201,13 @@ export default class Map {
     ${list}
     </dl>`;
   }
-  constructor($map) {
+  constructor($map, search$) {
     this.naverMap = createNaverMap($map);
     this.infowindow = createNaverInfoWindow();
     this.markers = [];
     this.markerClicks = [];
     this.markerClickSubscriptions = [];
-    let stations$ = this.createDragend$().pipe(
+    let stations$ = merge(search$, this.createDragend$()).pipe(
       this.mapStation,
       this.manageMarkers.bind(this),
       this.mapMarkerClick,
